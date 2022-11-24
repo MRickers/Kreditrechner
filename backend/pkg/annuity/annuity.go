@@ -26,6 +26,39 @@ type Response struct {
 	Results []Result
 }
 
+type Observer interface {
+	Update(response Response)
+}
+
+type Observerable interface {
+	AddObserver(observer Observer)
+	NotifyObservers(response Response)
+}
+
+type AnnuityCalculator struct {
+	observers []Observer
+}
+
+func (ac *AnnuityCalculator) Calculate(request Request) (Response, error) {
+	response, err := CalculateAnnuity(request)
+
+	if err != nil {
+		return Response{}, err
+	}
+	ac.NotifyObservers(response)
+	return response, nil
+}
+
+func (ac *AnnuityCalculator) AddObserver(observer Observer) {
+	ac.observers = append(ac.observers, observer)
+}
+
+func (ac *AnnuityCalculator) NotifyObservers(response Response) {
+	for _, observer := range ac.observers {
+		observer.Update(response)
+	}
+}
+
 func NewRequest() Request {
 	return Request{100000, 10, 1, 1, 1}
 }

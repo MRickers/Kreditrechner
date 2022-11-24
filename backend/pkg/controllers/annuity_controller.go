@@ -9,6 +9,10 @@ import (
 	"kreditrechner/pkg/annuity"
 )
 
+type Controller interface {
+	Invoke(w http.ResponseWriter, r *http.Request)
+}
+
 type Logger interface {
 	Info(v ...any)
 	Debug(v ...any)
@@ -46,21 +50,19 @@ type AnnuityResponse struct {
 	Results []AnnuityResult
 }
 
-func CalculateAnnuityController(logger Logger) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		calculateAnnuityHandler(w, r, logger)
-	}
-	return http.HandlerFunc(fn)
+type AnnuityController struct {
+	calulator annuity.AnnuityCalculator
+	logger    Logger
 }
 
-func calculateAnnuityHandler(w http.ResponseWriter, r *http.Request, logger Logger) {
+func (ac *AnnuityController) Invoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		logger.Error("CalculateAnnuityHandler error: want post methode got %s", r.Method)
+		ac.logger.Error("CalculateAnnuityHandler error: want post methode got %s", r.Method)
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	// get json body
-	body, err := readHttpRequestBody(r, logger)
+	body, err := readHttpRequestBody(r, ac.logger)
 
 	if err != nil {
 		code := err.(*HttpError).Code
@@ -73,27 +75,34 @@ func calculateAnnuityHandler(w http.ResponseWriter, r *http.Request, logger Logg
 	err = json.Unmarshal(body, &annuity_request)
 
 	if err != nil {
-		logger.Error("Could not unmarshal body")
+		ac.logger.Error("Could not unmarshal body")
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	response, err := requestAnnuity(annuity_request)
+	request := convertRequest(annuity_request)
+
+	response, err := ac.calulator.Calculate(request)
+	if err != nil {
+		ac.logger.Error("Calculating request failed: %s", err)
+		return
+	}
+	annuity_response := convertResponse(response)
+
+	json_response, err := json.Marshal(annuity_response)
 
 	if err != nil {
-		logger.Error("Calculate Annuity failed: %s", err)
+		ac.logger.Error("Marshal json failed: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	json_response, err := json.Marshal(response)
-
-	if err != nil {
-		logger.Error("Marshal json failed: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	fmt.Fprintf(w, "%s", string(json_response))
+}
+
+func InvokeController(controller Controller) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		controller.Invoke(w, r)
+	}
+	return http.HandlerFunc(fn)
 }
 
 func readHttpRequestBody(r *http.Request, logger Logger) ([]byte, error) {
@@ -128,6 +137,16 @@ func requestAnnuity(request AnnuityRequest) (AnnuityResponse, error) {
 	return convertResponse(response), nil
 }
 
+func convertRequest(request AnnuityRequest) annuity.Request {
+	annuity_request := annuity.NewRequest()
+	annuity_request.Creditsum = request.Creditsum
+	annuity_request.Initial_repayment_rate = request.Initial_repayment_rate
+	annuity_request.Interest_rate = request.Interest_rate
+	annuity_request.Runtime = request.Runtime
+	annuity_request.Unscheduled_repayment_rate = request.Unscheduled_repayment_rate
+
+	return annuity_request
+}
 func convertResponse(response annuity.Response) AnnuityResponse {
 	var annuity_response AnnuityResponse
 

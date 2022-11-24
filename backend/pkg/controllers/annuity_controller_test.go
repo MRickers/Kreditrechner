@@ -8,6 +8,8 @@ import (
 
 	"github.com/appleboy/gofight/v2"
 	"github.com/stretchr/testify/assert"
+
+	"kreditrechner/pkg/annuity"
 )
 
 type DummyLogger struct {
@@ -23,14 +25,19 @@ func (l *DummyLogger) Debug(v ...any) {}
 func (l *DummyLogger) Warn(v ...any)  {}
 func (l *DummyLogger) Error(v ...any) {}
 
-func HTTPCalculateAnnuityHandler(logger *DummyLogger) {
-	annuityHandler := CalculateAnnuityController(logger)
-	http.HandleFunc("/test", annuityHandler.ServeHTTP)
+func createAnnuityController() {
+	logger := DummyLogger{}
+	calculator := annuity.AnnuityCalculator{}
+	annuity_controller := AnnuityController{
+		calulator: calculator,
+		logger:    &logger,
+	}
+	http.HandleFunc("/test", annuity_controller.Invoke)
 }
 
 func TestCalculateAnnuityController(t *testing.T) {
-	logger := DummyLogger{}
-	HTTPCalculateAnnuityHandler(&logger)
+
+	createAnnuityController()
 
 	r := gofight.New()
 
