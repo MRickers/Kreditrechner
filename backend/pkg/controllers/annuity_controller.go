@@ -55,6 +55,13 @@ type AnnuityController struct {
 	logger    Logger
 }
 
+func NewAnnuityController(logger Logger, calc annuity.AnnuityCalculator) AnnuityController {
+	return AnnuityController{
+		calulator: calc,
+		logger:    logger,
+	}
+}
+
 func (ac *AnnuityController) Invoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		ac.logger.Error("CalculateAnnuityHandler error: want post methode got %s", r.Method)
