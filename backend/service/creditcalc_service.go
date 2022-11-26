@@ -24,7 +24,8 @@ func main() {
 	annuity_controller := controllers.NewAnnuityController(logger, annuity_calculator)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/calculateAnnuity", annuity_controller.Invoke)
+	mux.HandleFunc("/api/v1/calculateAnnuity", annuity_controller.Invoke)
+	mux.Handle("/", http.FileServer(http.Dir("./service/static")))
 
 	addr := ":5000"
 	logger.Info(fmt.Sprintf("Listening on %s", addr))

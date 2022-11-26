@@ -32,22 +32,22 @@ func (e *HttpError) Error() string {
 type AnnuityRequest struct {
 	Creditsum                  uint    `json:"creditsum"`
 	Runtime                    uint    `json:"runtime"`
-	Interest_rate              float64 `json:"interest_rate"`
-	Initial_repayment_rate     float64 `json:"initial_repayment_rate"`
-	Unscheduled_repayment_rate float64 `json:"unscheduled_repayment_rate"`
+	Interest_rate              float64 `json:"interestRate"`
+	Initial_repayment_rate     float64 `json:"initialRepaymentRate"`
+	Unscheduled_repayment_rate float64 `json:"unscheduledRepaymentRate"`
 }
 
 type AnnuityResult struct {
 	Year                  uint `json:"year"`
-	Residual_dept         uint `json:"residual_dept"`
+	Residual_dept         uint `json:"residualDept"`
 	Interest              uint `json:"interest"`
 	Repayment             uint `json:"repayment"`
-	Unscheduled_repayment uint `json:"unscheduled_repayment"`
+	Unscheduled_repayment uint `json:"unscheduledRepayment"`
 	Annuity               uint `json:"annuity"`
 }
 
 type AnnuityResponse struct {
-	Results []AnnuityResult
+	Results []AnnuityResult `json:"results"`
 }
 
 type AnnuityController struct {
@@ -82,7 +82,7 @@ func (ac *AnnuityController) Invoke(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &annuity_request)
 
 	if err != nil {
-		ac.logger.Error("Could not unmarshal body")
+		ac.logger.Error(fmt.Sprintf("Could not unmarshal body: %s", err))
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
@@ -103,13 +103,6 @@ func (ac *AnnuityController) Invoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintf(w, "%s", string(json_response))
-}
-
-func InvokeController(controller Controller) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		controller.Invoke(w, r)
-	}
-	return http.HandlerFunc(fn)
 }
 
 func readHttpRequestBody(r *http.Request, logger Logger) ([]byte, error) {
