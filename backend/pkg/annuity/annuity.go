@@ -1,6 +1,7 @@
 package annuity
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -20,6 +21,17 @@ type Result struct {
 	Repayment             uint
 	Unscheduled_repayment uint
 	Annuity               uint
+}
+
+func NewResult() Result {
+	return Result{
+		Year:                  1,
+		Residual_dept:         0,
+		Interest:              0,
+		Repayment:             0,
+		Unscheduled_repayment: 0,
+		Annuity:               0,
+	}
 }
 
 type Response struct {
@@ -78,7 +90,10 @@ func CalculateAnnuity(request Request) (Response, error) {
 	unscheduled_repayment_rate := request.Unscheduled_repayment_rate / 100
 
 	for year := 0; year < int(request.Runtime); year++ {
-		next_result := calulateResultForNextYear(old_result, unscheduled_repayment_rate, interest_rate)
+		next_result, err := calulateResultForNextYear(old_result, unscheduled_repayment_rate, interest_rate)
+		if err != nil {
+			break
+		}
 		response.Results = append(response.Results, next_result)
 		old_result = next_result
 	}
@@ -118,7 +133,7 @@ func calculateAnnuity(request Request) uint {
 func calulateResultForNextYear(
 	old_result Result,
 	unscheduled_repayment_rate float64,
-	interest_rate float64) Result {
+	interest_rate float64) (Result, error) {
 	var result Result
 
 	result.Annuity = old_result.Annuity
@@ -130,5 +145,9 @@ func calulateResultForNextYear(
 	result.Unscheduled_repayment = uint(math.Round(float64(result.Residual_dept) * unscheduled_repayment_rate))
 
 	result.Year = old_result.Year + 1
-	return result
+
+	if result.Residual_dept >= old_result.Residual_dept {
+		return Result{}, errors.New(fmt.Sprintf("Annuity end of calculation"))
+	}
+	return result, nil
 }

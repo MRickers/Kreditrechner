@@ -105,3 +105,21 @@ func TestCalculatingAnnuityInvalidRuntime(t *testing.T) {
 		t.Fatalf("Calculating Annuity failed: want error got none")
 	}
 }
+
+func TestCalculatingAnnuityResidualOverflow(t *testing.T) {
+	request := NewRequest()
+	request.Runtime = 30
+	request.Creditsum = 100000
+	request.Interest_rate = 1
+	request.Initial_repayment_rate = 3
+	request.Unscheduled_repayment_rate = 2
+
+	result, err := CalculateAnnuity(request)
+
+	if err != nil {
+		t.Fatalf("Calculating Annuity failed: want error got none")
+	}
+	if len(result.Results) > 23 {
+		t.Fatalf("Invalid array length: want %d got %d", 23, len(result.Results))
+	}
+}
