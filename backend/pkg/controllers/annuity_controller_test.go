@@ -43,11 +43,11 @@ func TestCalculateAnnuityController(t *testing.T) {
 
 	r.POST("/test").
 		SetJSON(gofight.D{
-			"creditsum":                  350000,
-			"initial_repayment_rate":     2,
-			"interest_rate":              3,
-			"unscheduled_repayment_rate": 2,
-			"runtime":                    10,
+			"creditsum":                350000,
+			"initialRepaymentRate":     2,
+			"interestRate":             3,
+			"unscheduledRepaymentRate": 2,
+			"runtime":                  10,
 		}).
 		SetDebug(true).
 		Run(http.DefaultServeMux, func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {

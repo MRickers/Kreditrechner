@@ -123,3 +123,33 @@ func TestCalculatingAnnuityResidualOverflow(t *testing.T) {
 		t.Fatalf("Invalid array length: want %d got %d", 23, len(result.Results))
 	}
 }
+
+func TestCalculatingAnnuitySums(t *testing.T) {
+	request := NewRequest()
+	request.Runtime = 14
+	request.Creditsum = 270000
+	request.Interest_rate = 4.34
+	request.Initial_repayment_rate = 2
+	request.Unscheduled_repayment_rate = 2
+
+	result, err := CalculateAnnuity(request)
+
+	if err != nil {
+		t.Fatalf("Calculating Annuity failed: want error got none")
+	}
+	if result.Interest_sum != 121193 {
+		t.Fatalf("invalid interest sum: want %d got %d", 121193, result.Interest_sum)
+	}
+	if result.Repayment_sum != 135577 {
+		t.Fatalf("invalid repayment sum: want %d got %d", 135577, result.Repayment_sum)
+	}
+	if result.Unscheduled_repayment_sum != 55852 {
+		t.Fatalf("invalid unscheduled repayment sum: want %d got %d", 55852, result.Unscheduled_repayment_sum)
+	}
+	if result.Annuity_sum != 256770 {
+		t.Fatalf("invalid annuity sum: want %d got %d", 256770, result.Annuity_sum)
+	}
+	if result.Annuity_unsched_sum != 312622 {
+		t.Fatalf("invalid annuity and unscheduled repayment sum: want %d got %d", 312622, result.Annuity_unsched_sum)
+	}
+}

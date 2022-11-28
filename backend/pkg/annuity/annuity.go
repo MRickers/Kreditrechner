@@ -1,7 +1,6 @@
 package annuity
 
 import (
-	"errors"
 	"fmt"
 	"math"
 )
@@ -35,16 +34,21 @@ func NewResult() Result {
 }
 
 type Response struct {
-	Results []Result
+	Results                   []Result
+	Interest_sum              uint
+	Repayment_sum             uint
+	Unscheduled_repayment_sum uint
+	Annuity_sum               uint
+	Annuity_unsched_sum       uint
 }
 
 type Observer interface {
-	Update(response Response)
+	Update(request Request, response Response)
 }
 
 type Observerable interface {
 	AddObserver(observer Observer)
-	NotifyObservers(response Response)
+	NotifyObservers(request Request, response Response)
 }
 
 type AnnuityCalculator struct {
@@ -57,7 +61,7 @@ func (ac *AnnuityCalculator) Calculate(request Request) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
-	ac.NotifyObservers(response)
+	ac.NotifyObservers(request, response)
 	return response, nil
 }
 
@@ -65,9 +69,9 @@ func (ac *AnnuityCalculator) AddObserver(observer Observer) {
 	ac.observers = append(ac.observers, observer)
 }
 
-func (ac *AnnuityCalculator) NotifyObservers(response Response) {
+func (ac *AnnuityCalculator) NotifyObservers(request Request, response Response) {
 	for _, observer := range ac.observers {
-		observer.Update(response)
+		observer.Update(request, response)
 	}
 }
 
@@ -84,17 +88,32 @@ func CalculateAnnuity(request Request) (Response, error) {
 
 	old_result := initResult(request)
 	response := Response{
-		Results: []Result{old_result},
+		Results:                   []Result{old_result},
+		Interest_sum:              0,
+		Repayment_sum:             0,
+		Unscheduled_repayment_sum: 0,
+		Annuity_sum:               0,
+		Annuity_unsched_sum:       0,
 	}
 	interest_rate := request.Interest_rate / 100
 	unscheduled_repayment_rate := request.Unscheduled_repayment_rate / 100
+	var interest_summe uint = 0
+	for year := 0; year < int(request.Runtime+1); year++ {
+		response.Interest_sum += old_result.Interest
+		response.Repayment_sum += old_result.Repayment
+		response.Unscheduled_repayment_sum += old_result.Unscheduled_repayment
+		response.Annuity_sum += old_result.Annuity
+		response.Annuity_unsched_sum += old_result.Unscheduled_repayment +
+			old_result.Annuity
 
-	for year := 0; year < int(request.Runtime); year++ {
+		interest_summe += old_result.Interest
+
 		next_result, err := calulateResultForNextYear(old_result, unscheduled_repayment_rate, interest_rate)
 		if err != nil {
 			break
 		}
 		response.Results = append(response.Results, next_result)
+
 		old_result = next_result
 	}
 
@@ -147,7 +166,7 @@ func calulateResultForNextYear(
 	result.Year = old_result.Year + 1
 
 	if result.Residual_dept >= old_result.Residual_dept {
-		return Result{}, errors.New(fmt.Sprintf("Annuity end of calculation"))
+		return Result{}, fmt.Errorf("annuity end of calculation")
 	}
 	return result, nil
 }
