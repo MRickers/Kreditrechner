@@ -126,7 +126,7 @@ func TestCalculatingAnnuityResidualOverflow(t *testing.T) {
 
 func TestCalculatingAnnuitySums(t *testing.T) {
 	request := NewRequest()
-	request.Runtime = 14
+	request.Runtime = 15
 	request.Creditsum = 270000
 	request.Interest_rate = 4.34
 	request.Initial_repayment_rate = 2

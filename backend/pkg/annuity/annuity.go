@@ -95,20 +95,14 @@ func CalculateAnnuity(request Request) (Response, error) {
 		Annuity_sum:               0,
 		Annuity_unsched_sum:       0,
 	}
+	calcSums(old_result, &response)
+
 	interest_rate := request.Interest_rate / 100
 	unscheduled_repayment_rate := request.Unscheduled_repayment_rate / 100
-	var interest_summe uint = 0
-	for year := 0; year < int(request.Runtime+1); year++ {
-		response.Interest_sum += old_result.Interest
-		response.Repayment_sum += old_result.Repayment
-		response.Unscheduled_repayment_sum += old_result.Unscheduled_repayment
-		response.Annuity_sum += old_result.Annuity
-		response.Annuity_unsched_sum += old_result.Unscheduled_repayment +
-			old_result.Annuity
 
-		interest_summe += old_result.Interest
-
+	for year := 0; year < int(request.Runtime-1); year++ {
 		next_result, err := calulateResultForNextYear(old_result, unscheduled_repayment_rate, interest_rate)
+		calcSums(next_result, &response)
 		if err != nil {
 			break
 		}
@@ -140,6 +134,15 @@ func initResult(request Request) Result {
 	result.Year = 1
 
 	return result
+}
+
+func calcSums(result Result, response *Response) {
+	response.Interest_sum += result.Interest
+	response.Repayment_sum += result.Repayment
+	response.Unscheduled_repayment_sum += result.Unscheduled_repayment
+	response.Annuity_sum += result.Annuity
+	response.Annuity_unsched_sum += result.Unscheduled_repayment +
+		result.Annuity
 }
 
 func calculateAnnuity(request Request) uint {
