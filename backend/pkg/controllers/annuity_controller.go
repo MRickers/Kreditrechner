@@ -47,7 +47,12 @@ type AnnuityResult struct {
 }
 
 type AnnuityResponse struct {
-	Results []AnnuityResult `json:"results"`
+	Results                   []AnnuityResult `json:"results"`
+	Interest_sum              uint            `json:"interestSum"`
+	Repayment_sum             uint            `json:"repaymentSum"`
+	Unscheduled_repayment_sum uint            `json:"unscheduledRepaymentSum"`
+	Annuity_sum               uint            `json:"annuitySum"`
+	Annuity_unsched_sum       uint            `json:"totalPayment"`
 }
 
 type AnnuityController struct {
@@ -162,5 +167,12 @@ func convertResponse(response annuity.Response) AnnuityResponse {
 
 		annuity_response.Results = append(annuity_response.Results, annuity_result)
 	}
+
+	annuity_response.Annuity_sum = response.Annuity_sum
+	annuity_response.Annuity_unsched_sum = response.Annuity_unsched_sum
+	annuity_response.Interest_sum = response.Interest_sum
+	annuity_response.Repayment_sum = response.Repayment_sum
+	annuity_response.Unscheduled_repayment_sum = response.Unscheduled_repayment_sum
+
 	return annuity_response
 }
