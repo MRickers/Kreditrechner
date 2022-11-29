@@ -25,12 +25,6 @@
           </v-tab>
         </v-tabs>
         <v-spacer></v-spacer>
-  
-        <!--v-avatar
-          class="hidden-sm-and-down"
-          color="grey-darken-1"
-          size="32"
-        ></v-avatar-->
       </v-app-bar>
   
       <v-main class="bg-grey-lighten-3">
@@ -179,26 +173,50 @@
                   Berechnen
                 </v-btn>
 
-                <v-table v-if="show_calculation">
+                <v-sheet
+                class="py-4" 
+                v-if="show_calculation">
+                  <v-divider></v-divider>
+                  <v-row class="py-6">
+                    <v-col
+                    cols="12"
+                    sm="6">
+                    <div class="text-body">
+                      Monatliche Rate
+                    </div>
+                  </v-col>
+                  <v-col
+                  cols="12"
+                  sm="6">
+                    <div class="text-body text-right">
+                      {{number_formatter.format(
+                        roundOff((calculatedAnnuity.results[0].annuity / 12), 2))
+                      }}
+                    </div>
+                  </v-col>
+                  </v-row>
+                  
+                  <v-table
+                  density="compact">
                   <thead>
                     <tr>
                       <th class="text-left">
-                        Year
+                        Jahr
                       </th>
                       <th class="text-left">
-                        Residual dept [€]
+                        Restschuld
                       </th>
                       <th class="text-left">
-                        Interest [€]
+                        Zinsanteil
                       </th>
                       <th class="text-left">
-                        Repayment [€]
+                        Tilgung
                       </th>
                       <th class="text-left">
-                        Unsched. Repayment [€]
+                        Sondertilgung
                       </th>
                       <th class="text-left">
-                        Annuity [€]
+                        Rate
                       </th>
                     </tr>
                   </thead>
@@ -206,14 +224,105 @@
                     <tr
                       v-for="item in calculatedAnnuity.results">
                       <td>{{item.year}}</td>
-                      <td>{{item.residualDept}}</td>
-                      <td>{{item.interest}}</td>
-                      <td>{{item.repayment}}</td>
-                      <td>{{item.unscheduledRepayment}}</td>
-                      <td>{{item.annuity}}</td>
+                      <td>{{number_formatter.format(item.residualDept)}}</td>
+                      <td>{{number_formatter.format(item.interest)}}</td>
+                      <td>{{number_formatter.format(item.repayment)}}</td>
+                      <td>{{number_formatter.format(item.unscheduledRepayment)}}</td>
+                      <td>{{number_formatter.format(item.annuity)}}</td>
                     </tr>
                   </tbody>
                 </v-table>
+
+                <v-card
+                    max-width="400"
+                    class="mx-auto"
+                  >
+                    <v-container>
+                    <v-row dense>
+                      <v-col cols="12">
+                        <v-card
+                          color="primary"
+                          theme="light"
+                        >
+                          <v-card-title class="text-h6">
+                            Zusammenfassung
+                          </v-card-title>
+                          <v-card-subtitle>Über die Laufzeit insgesamt gezahlte Positionen</v-card-subtitle>
+                          <v-divider thickness="2"></v-divider>
+                          <v-card-text>
+                            <v-row>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text--primary">Zinsen</p>
+                              </v-col>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text-right">{{number_formatter.format(calculatedAnnuity.interestSum)}}</p>
+                              </v-col>
+                          </v-row>
+                          <v-row>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text--primary">Raten</p>
+                              </v-col>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text-right">{{number_formatter.format(calculatedAnnuity.annuitySum)}}</p>
+                              </v-col>
+                          </v-row>
+                          <v-row>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text--primary">Tilgung</p>
+                              </v-col>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text-right">{{number_formatter.format(calculatedAnnuity.repaymentSum)}}</p>
+                              </v-col>
+                          </v-row>
+                          <v-row>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text--primary">Sondertilgung</p>
+                              </v-col>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text-right">{{number_formatter.format(calculatedAnnuity.unscheduledRepaymentSum)}}</p>
+                              </v-col>
+                          </v-row>
+                          <v-row>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text--primary">Insgesamt eingezahlt</p>
+                              </v-col>
+                              <v-col
+                              cols="12"
+                              sm="6">
+                              <p class="text-right">{{number_formatter.format(calculatedAnnuity.totalPayment)}}</p>
+                              </v-col>
+                          </v-row>
+                          </v-card-text>
+                          <v-divider></v-divider>
+                          <v-card-actions>
+                            <v-btn variant="text">
+                              Export CSV
+                            </v-btn>
+                          </v-card-actions>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                    </v-container>
+                  </v-card>
+                </v-sheet>
                 </v-sheet>
                 </v-sheet>
             </v-col>
@@ -258,9 +367,19 @@
 
   class AnnuityResponse {
     public results: AnnuityResult[];
+    public interestSum: number;
+    public repaymentSum: number;
+    public unscheduledRepaymentSum: number;
+    public annuitySum: number;
+    public totalPayment: number;
 
     public constructor() {
       this.results = [];
+      this.interestSum = 0;
+      this.repaymentSum = 0;
+      this.unscheduledRepaymentSum = 0;
+      this.annuitySum = 0;
+      this.totalPayment = 0;
     }
   }
 
@@ -268,14 +387,14 @@
       public creditsum: number;
       public runtime: number;
       public interestRate: number;
-      public repaymentRate: number;
+      public initialRepaymentRate: number;
       public unscheduledRepaymentRate: number;
 
       constructor() {
         this.creditsum = 0;
         this.runtime = 0;
         this.interestRate = 0;
-        this.repaymentRate = 0;
+        this.initialRepaymentRate = 0;
         this.unscheduledRepaymentRate = 0;
       }
   }
@@ -289,6 +408,8 @@
         unscheduledRepaymentRate:'1,0',
         runtime:'10',
         creditsum: '100000',
+        number: 100000,
+        number_formatter: new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }),
 
         links: [
           'Tilgungsrechner',
@@ -315,11 +436,15 @@
         ],
       }),
       methods: {
+        roundOff(num: number, places: number): number {
+          const x = Math.pow(10,places);
+          return Math.round(num * x) / x;
+        },
         convertToAnnuityRequest(): AnnuityRequest {
           var annuityRequest = new AnnuityRequest();
           annuityRequest.creditsum = parseInt(this.creditsum);
           annuityRequest.interestRate = parseFloat(this.interestRate.replace(',','.'));
-          annuityRequest.repaymentRate = parseFloat(this.repaymentRate.replace(',','.'));
+          annuityRequest.initialRepaymentRate = parseFloat(this.repaymentRate.replace(',','.'));
           annuityRequest.unscheduledRepaymentRate = parseFloat(this.unscheduledRepaymentRate.replace(',','.'));
           annuityRequest.runtime = parseInt(this.runtime);
 
